@@ -1,7 +1,12 @@
 <?xml version="1.0"?>
 <scenarios>
-    <scenario name="Custom_1" type="Custom" town="Town01">
+    <scenario name="Custom_1" type="CustomScenario" town="Town01">
         <ego_vehicle x="107" y="133" z="0.5" yaw="0" model="vehicle.lincoln.mkz2017" />
+        <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
+    </scenario>
+    
+    <scenario name="Custom_2" type="CustomScenario" town="Town02">
+        <ego_vehicle x="100" y="100" z="0.5" yaw="0" model="vehicle.lincoln.mkz2017" />
         <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
     </scenario>
 </scenarios>
