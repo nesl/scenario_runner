@@ -27,7 +27,7 @@ from srunner.scenariomanager.scenarioatomics.atomic_trigger_conditions import (I
                                                                                StandStill)
 from srunner.scenariomanager.timer import TimeOut
 from srunner.scenarios.basic_scenario import BasicScenario
-from srunner.tools.scenario_helper import get_waypoint_in_distance
+from srunner.tools.scenario_helper import get_waypoint_in_distance, generate_target_waypoint_list
 
 class CustomScenario(BasicScenario):
     """
@@ -47,7 +47,7 @@ class CustomScenario(BasicScenario):
                  timeout=60):
         
         self._map = CarlaDataProvider.get_map()
-        self._first_vehicle_location = 150
+        self._first_vehicle_location = 50
         self._first_vehicle_speed = 50
         self._reference_waypoint = self._map.get_waypoint(config.trigger_points[0].location)
         self._other_actor_max_brake = 1.0
@@ -94,18 +94,19 @@ class CustomScenario(BasicScenario):
         # reset its pose to the required one
         start_transform = ActorTransformSetter(self.other_actors[0], self._other_actor_transform)
 
-        driving_fixed_distance = py_trees.composites.Parallel("DrivingFixedDistance", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
+        # generating waypoints until intersection (target_waypoint)
+        plan, target_waypoint = generate_target_waypoint_list(CarlaDataProvider.get_map().get_waypoint(self.other_actors[0].get_location()), 0)
 
-        driving_fixed_distance.add_child(WaypointFollower(self.other_actors[0], self._first_vehicle_speed))
-        driving_fixed_distance.add_child(DriveDistance(self.other_actors[1], 100))
+        drive_fixed_distance = py_trees.composites.Parallel("DrivingFixedDistance", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
+        drive_fixed_distance.add_child(WaypointFollower(self.other_actors[0], self._first_vehicle_speed, plan=plan, avoid_collision=True))
+        drive_fixed_distance.add_child(DriveDistance(self.other_actors[0], 100))
 
         # end condition
         endcondition = DriveDistance(self.other_actors[0], 100)
 
         # end condition
         endcondition = py_trees.composites.Parallel("Waiting for end position", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL)
-        endcondition_part1 = InTriggerDistanceToVehicle(self.other_actors[0], self.ego_vehicles[0],
-                                                        distance=10, name="FinalDistance")
+        endcondition_part1 = InTriggerDistanceToVehicle(self.other_actors[0], self.ego_vehicles[0], distance=10, name="FinalDistance")
         endcondition_part2 = StandStill(self.ego_vehicles[0], name="StandStill", duration=1)
         endcondition.add_child(endcondition_part1)
         endcondition.add_child(endcondition_part2)
@@ -113,7 +114,7 @@ class CustomScenario(BasicScenario):
         # Build behavior tree
         sequence = py_trees.composites.Sequence("Sequence Behavior")
         sequence.add_child(start_transform)
-        sequence.add_child(driving_fixed_distance)
+        sequence.add_child(drive_fixed_distance)
         sequence.add_child(endcondition)
         sequence.add_child(ActorDestroy(self.other_actors[0]))
 
