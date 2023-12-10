@@ -41,18 +41,16 @@ class CustomScenario(BasicScenario):
     :param timeout is the overall scenario timeout (optional, default=60 seconds)
     """
 
-    timeout = 300 # scenario timeout in seconds
-
     def __init__(self, world, ego_vehicles, config, randomize=False, debug_mode=False, criteria_enable=True,
                  timeout=60):
         
         self._map = CarlaDataProvider.get_map()
-        self._first_vehicle_location = 50
+        self._first_vehicle_distance = 50
         self._first_vehicle_speed = 50
         self._reference_waypoint = self._map.get_waypoint(config.trigger_points[0].location)
         self._other_actor_max_brake = 1.0
-        self._other_actor_stop_in_front_intersection = 20
         self._other_actor_transform = None
+        self._first_vehicle_drive_distance = 50
         self.timeout = timeout
 
         # Call constructor of BasicScenario
@@ -69,7 +67,7 @@ class CustomScenario(BasicScenario):
         Initialize first (leading) vehicle 
         """
 
-        first_vehicle_waypoint, _ = get_waypoint_in_distance(self._reference_waypoint, self._first_vehicle_location)
+        first_vehicle_waypoint, _ = get_waypoint_in_distance(self._reference_waypoint, self._first_vehicle_distance)
         self._other_actor_transform = carla.Transform(
             carla.Location(first_vehicle_waypoint.transform.location.x,
                            first_vehicle_waypoint.transform.location.y,
@@ -94,28 +92,23 @@ class CustomScenario(BasicScenario):
         # reset its pose to the required one
         start_transform = ActorTransformSetter(self.other_actors[0], self._other_actor_transform)
 
+        target_waypoint = get_waypoint_in_distance(CarlaDataProvider.get_map().get_waypoint(self.other_actors[0].get_location()), self._first_vehicle_drive_distance)
+
         # generating waypoints until intersection (target_waypoint)
-        plan, target_waypoint = generate_target_waypoint_list(CarlaDataProvider.get_map().get_waypoint(self.other_actors[0].get_location()), 0)
+        plan, next_waypoint = generate_target_waypoint_list(target_waypoint, 0)
 
-        drive_fixed_distance = py_trees.composites.Parallel("DrivingFixedDistance", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
-        drive_fixed_distance.add_child(WaypointFollower(self.other_actors[0], self._first_vehicle_speed, plan=plan, avoid_collision=True))
-        drive_fixed_distance.add_child(DriveDistance(self.other_actors[0], 100))
-
+        drive_along_waypoints = WaypointFollower(self.other_actors[0], self._first_vehicle_speed, plan=plan, avoid_collision=True)
+        
         # end condition
-        endcondition = DriveDistance(self.other_actors[0], 100)
-
-        # end condition
-        endcondition = py_trees.composites.Parallel("Waiting for end position", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL)
-        endcondition_part1 = InTriggerDistanceToVehicle(self.other_actors[0], self.ego_vehicles[0], distance=10, name="FinalDistance")
-        endcondition_part2 = StandStill(self.ego_vehicles[0], name="StandStill", duration=1)
-        endcondition.add_child(endcondition_part1)
-        endcondition.add_child(endcondition_part2)
+        end_condition = py_trees.composites.Parallel("Waiting for end position", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
+        end_condition.add_child(InTriggerDistanceToVehicle(self.other_actors[0], self.ego_vehicles[0], distance=20, name="FinalDistance"))
+        end_condition.add_child(StandStill(self.ego_vehicles[0], name="StandStill", duration=1))
         
         # Build behavior tree
         sequence = py_trees.composites.Sequence("Sequence Behavior")
         sequence.add_child(start_transform)
-        sequence.add_child(drive_fixed_distance)
-        sequence.add_child(endcondition)
+        sequence.add_child(drive_along_waypoints)
+        sequence.add_child(end_condition)
         sequence.add_child(ActorDestroy(self.other_actors[0]))
 
         return sequence
