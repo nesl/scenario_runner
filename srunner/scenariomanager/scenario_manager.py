@@ -166,6 +166,7 @@ class ScenarioManager(object):
 
             if self._agent is not None:
                 ego_action = self._agent()
+                print("agent is not empty")
 
             if self._agent is not None:
                 self.ego_vehicles[0].apply_control(ego_action)

@@ -61,7 +61,7 @@ class ScenarioRunner(object):
     # Tunable parameters
     client_timeout = 10.0  # in seconds
     wait_for_world = 20.0  # in seconds
-    frame_rate = 20.0      # in Hz
+    frame_rate = 10.0      # in Hz
 
     # CARLA world and scenario handlers
     world = None
@@ -88,8 +88,11 @@ class ScenarioRunner(object):
         self.client = carla.Client(args.host, int(args.port))
         self.client.set_timeout(self.client_timeout)
 
+        print("carla client created at " + args.host + args.port)
+
         self.traffic_manager = self.client.get_trafficmanager(int(self._args.trafficManagerPort))
 
+        print("traffic manager created " + str(self.traffic_manager))
         dist = pkg_resources.get_distribution("carla")
         if LooseVersion(dist.version) < LooseVersion('0.9.10'):
             raise ImportError("CARLA version 0.9.10 or newer required. CARLA version found: {}".format(dist))
@@ -228,6 +231,11 @@ class ScenarioRunner(object):
             for i, _ in enumerate(self.ego_vehicles):
                 self.ego_vehicles[i].set_transform(ego_vehicles[i].transform)
                 CarlaDataProvider.register_actor(self.ego_vehicles[i])
+            
+        print("self.ego_vehicles", len(self.ego_vehicles))
+        print("ego vehicles", len(ego_vehicles))
+        #print("found", ego_vehicle_found)
+
 
         # sync state
         if CarlaDataProvider.is_sync_mode():
@@ -517,7 +525,7 @@ def main():
     parser = argparse.ArgumentParser(description=description,
                                      formatter_class=RawTextHelpFormatter)
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + VERSION)
-    parser.add_argument('--host', default='127.0.0.1',
+    parser.add_argument('--host', default='0.0.0.0',
                         help='IP of the host server (default: localhost)')
     parser.add_argument('--port', default='2000',
                         help='TCP port to listen to (default: 2000)')

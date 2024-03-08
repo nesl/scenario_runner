@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <scenarios>
     <scenario name="Custom_1" type="CustomScenario" town="Town01">
-        <ego_vehicle x="396" y="318" z="0.3" yaw="-90" model="vehicle.lincoln.mkz2017" />
+        <ego_vehicle x="396" y="275" z="0.3" yaw="-90" model="vehicle.lincoln.mkz2017" />
         <weather cloudiness="0" precipitation="0" precipitation_deposits="0" wind_intensity="0" sun_azimuth_angle="0" sun_altitude_angle="75" />
     </scenario>
     

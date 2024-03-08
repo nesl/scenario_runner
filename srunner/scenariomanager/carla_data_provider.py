@@ -107,6 +107,7 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
         for actor in CarlaDataProvider._actor_location_map:
             if actor is not None and actor.is_alive:
                 CarlaDataProvider._actor_location_map[actor] = actor.get_location()
+                print("actor ", actor.id, " location ", CarlaDataProvider._actor_location_map[actor])
 
         for actor in CarlaDataProvider._actor_transform_map:
             if actor is not None and actor.is_alive:
