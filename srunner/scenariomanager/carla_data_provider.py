@@ -18,6 +18,9 @@ import numpy.random as random
 from six import iteritems
 
 import carla
+import os
+import pandas as pd
+from math import sqrt
 
 
 def calculate_velocity(actor):
@@ -94,6 +97,36 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
         """
         for actor in actors:
             CarlaDataProvider.register_actor(actor)
+
+    def initialize_csv():
+        """Initialize or reset the CSV file for logging actor data."""
+        file_path = '/home/erdos/workspace/scenario_runner/loc_log.csv'
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        df = pd.DataFrame(columns=['actor', 'x', 'y', 'distance'])
+        df.to_csv(file_path, index=False)
+
+    def log_actor_location(actor_id, location):
+        """Log the actor's ID and location to the CSV file."""
+        file_path = '/home/erdos/workspace/scenario_runner/loc_log.csv'
+        df = pd.read_csv(file_path)
+        new_row = {'actor': actor_id, 'x': location.x, 'y': location.y, 'distance': ''}
+        df = df.append(new_row, ignore_index=True)
+        df.to_csv(file_path, index=False)
+        CarlaDataProvider.compute_and_log_distance()
+
+    def compute_and_log_distance():
+        """Compute the distance between two actors and log it in the CSV."""
+        file_path = '/home/erdos/workspace/scenario_runner/loc_log.csv'
+        df = pd.read_csv(file_path)
+        if len(df) >= 2 and len(df) % 2:
+            loc1 = df.iloc[-2][['x', 'y']]
+            loc2 = df.iloc[-1][['x', 'y']]
+            distance = sqrt((loc1.x - loc2.x) ** 2 + (loc1.y - loc2.y) ** 2)
+            print("\ndistance: "+str(distance))
+            df.at[df.index[-2], 'distance'] = 0
+            df.at[df.index[-1], 'distance'] = distance
+            df.to_csv(file_path, index=False)
 
     @staticmethod
     def on_carla_tick():

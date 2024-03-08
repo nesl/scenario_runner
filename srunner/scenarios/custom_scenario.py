@@ -52,6 +52,8 @@ class CustomScenario(BasicScenario):
         self._first_vehicle_drive_distance = 100
         self.timeout = timeout
 
+        CarlaDataProvider.initialize_csv()
+
         # Call constructor of BasicScenario
         super(CustomScenario, self).__init__(
           "CustomScenario",
