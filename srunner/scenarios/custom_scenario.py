@@ -79,7 +79,7 @@ class CustomScenario(BasicScenario):
                            self._other_actor_transform.location.y,
                            self._other_actor_transform.location.z),
             self._other_actor_transform.rotation)
-        first_vehicle = CarlaDataProvider.request_new_actor('vehicle.nissan.patrol', first_vehicle_transform)
+        first_vehicle = CarlaDataProvider.request_new_actor(model='vehicle.nissan.patrol', spawn_point=first_vehicle_transform, color='yellow')
         first_vehicle.set_simulate_physics(enabled=False)
         self.other_actors.append(first_vehicle)
         
