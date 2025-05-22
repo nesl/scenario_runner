@@ -43,8 +43,8 @@ class CustomScenario(BasicScenario):
                  timeout=1000):
         
         self._map = CarlaDataProvider.get_map()
-        self._first_vehicle_distance = 60
-        self._first_vehicle_speed = 5
+        self._first_vehicle_distance = 30
+        self._first_vehicle_speed = 15
         self._reference_waypoint = self._map.get_waypoint(config.trigger_points[0].location)
         self._spawn_pts = self._map.get_spawn_points()
         self._other_actor_max_brake = 1.0
